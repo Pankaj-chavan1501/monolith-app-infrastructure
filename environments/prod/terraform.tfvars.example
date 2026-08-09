@@ -1,0 +1,7 @@
+workload_name = "monolith"
+environment   = "prod"
+location      = "centralindia"
+instance      = "001"
+tags = {
+  Owner = "ops-team"
+}

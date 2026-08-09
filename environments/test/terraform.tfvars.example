@@ -1,0 +1,7 @@
+workload_name = "monolith"
+environment   = "test"
+location      = "centralindia"
+instance      = "001"
+tags = {
+  Owner = "qa-team"
+}

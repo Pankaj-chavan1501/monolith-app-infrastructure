@@ -1,0 +1,242 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: "1.15.7"
+
+jobs:
+
+  # ============================================================
+  # CI - Terraform validation, security scanning and plan
+  # ============================================================
+
+  validate_and_plan:
+    name: Terraform CI & Security Scan - DEV
+    runs-on: ubuntu-latest
+
+    environment:
+      name: dev
+
+    defaults:
+      run:
+        working-directory: environments/dev
+
+    steps:
+
+      # ----------------------------------------------------------
+      # Checkout
+      # ----------------------------------------------------------
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------
+      # Terraform
+      # ----------------------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # ----------------------------------------------------------
+      # Azure OIDC Authentication
+      # ----------------------------------------------------------
+
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # ----------------------------------------------------------
+      # Terraform Format
+      # ----------------------------------------------------------
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive ../..
+
+      # ----------------------------------------------------------
+      # Terraform Init
+      # ----------------------------------------------------------
+
+      - name: Terraform Init
+        run: terraform init
+
+      # ----------------------------------------------------------
+      # Terraform Validate
+      # ----------------------------------------------------------
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # ----------------------------------------------------------
+      # TFLint
+      # ----------------------------------------------------------
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.64.0
+
+      - name: Run TFLint
+        run: |
+          tflint --init
+          tflint --recursive ../..
+
+      # ----------------------------------------------------------
+      # tfsec
+      # ----------------------------------------------------------
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: environments/dev
+
+      # ----------------------------------------------------------
+      # Checkov
+      # ----------------------------------------------------------
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: environments/dev
+          framework: terraform
+
+      # ----------------------------------------------------------
+      # Gitleaks
+      # ----------------------------------------------------------
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ----------------------------------------------------------
+      # Infracost
+      # ----------------------------------------------------------
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api_key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Run Infracost
+        run: infracost breakdown --path .
+        continue-on-error: true
+
+      # ----------------------------------------------------------
+      # Terraform Plan
+      # ----------------------------------------------------------
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # ----------------------------------------------------------
+      # Upload Terraform Plan
+      # ----------------------------------------------------------
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-dev-plan
+          path: environments/dev/tfplan
+
+
+  # ============================================================
+  # CD - Terraform Apply DEV
+  # Runs only after CI succeeds on main
+  # ============================================================
+
+  apply:
+    name: Terraform Apply - DEV
+
+    needs:
+      - validate_and_plan
+
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: dev
+
+    defaults:
+      run:
+        working-directory: environments/dev
+
+    steps:
+
+      # ----------------------------------------------------------
+      # Checkout
+      # ----------------------------------------------------------
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------
+      # Terraform
+      # ----------------------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # ----------------------------------------------------------
+      # Azure OIDC Authentication
+      # ----------------------------------------------------------
+
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # ----------------------------------------------------------
+      # Terraform Init
+      # ----------------------------------------------------------
+
+      - name: Terraform Init
+        run: terraform init
+
+      # ----------------------------------------------------------
+      # Download Terraform Plan
+      # ----------------------------------------------------------
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-dev-plan
+          path: environments/dev
+
+      # ----------------------------------------------------------
+      # Terraform Apply
+      # ----------------------------------------------------------
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
