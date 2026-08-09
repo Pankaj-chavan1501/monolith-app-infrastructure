@@ -155,13 +155,30 @@ jobs:
       # Infracost
       # ----------------------------------------------------------
 
+      - name: Check Infracost API Key
+        working-directory: .
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          if [ -z "$INFRACOST_API_KEY" ]; then
+            echo "INFRACOST_API_KEY is not configured."
+            echo "Please add INFRACOST_API_KEY to the DEV environment secrets."
+            exit 1
+          fi
+
+          echo "INFRACOST_API_KEY is configured."
+
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api_key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Run Infracost
-        run: infracost breakdown --path .
+        working-directory: environments/dev
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          infracost breakdown --path .
 
       # ----------------------------------------------------------
       # Terraform Plan
