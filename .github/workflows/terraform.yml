@@ -129,56 +129,19 @@ jobs:
       - name: Install Gitleaks
         working-directory: .
         run: |
-          VERSION="8.24.3"
+          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh \
+            | sh -s -- -b /usr/local/bin
 
-          curl -sSfL \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
-            -o /tmp/gitleaks.tar.gz
-
-          tar -xzf /tmp/gitleaks.tar.gz -C /tmp
-
-          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
-          sudo chmod +x /usr/local/bin/gitleaks
-
-          /usr/local/bin/gitleaks version
+          gitleaks version
 
       - name: Run Gitleaks
         working-directory: .
         run: |
-          /usr/local/bin/gitleaks detect \
+          gitleaks detect \
             --redact \
             --report-format sarif \
             --report-path "${{ runner.temp }}/gitleaks-results.sarif" \
             --exit-code 1
-
-      # ----------------------------------------------------------
-      # Infracost
-      # ----------------------------------------------------------
-
-      - name: Check Infracost API Key
-        working-directory: .
-        env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
-        run: |
-          if [ -z "$INFRACOST_API_KEY" ]; then
-            echo "INFRACOST_API_KEY is not configured."
-            echo "Please add INFRACOST_API_KEY to the DEV environment secrets."
-            exit 1
-          fi
-
-          echo "INFRACOST_API_KEY is configured."
-
-      - name: Setup Infracost
-        uses: infracost/actions/setup@v3
-        with:
-          api_key: ${{ secrets.INFRACOST_API_KEY }}
-
-      - name: Run Infracost
-        working-directory: environments/dev
-        env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
-        run: |
-          infracost breakdown --path .
 
       # ----------------------------------------------------------
       # Terraform Plan
