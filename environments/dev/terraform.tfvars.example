@@ -1,7 +1,69 @@
-workload_name = "monolith"
-environment   = "dev"
-location      = "centralindia"
-instance      = "001"
-tags = {
-  Owner = "dev-team"
+resource_groups = {
+  "dev_rg" = {
+    name     = "rg-monolith-dev-centralindia-001"
+    location = "centralindia"
+    tags = {
+      Environment = "dev"
+      Workload    = "monolith"
+    }
+  }
+}
+
+vnets = {
+  "dev_vnet" = {
+    name                = "vnet-monolith-dev-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-dev-centralindia-001"
+    address_space       = ["10.0.0.0/16"]
+  }
+}
+
+subnets = {
+  "dev_subnet" = {
+    name                 = "snet-monolith-dev-001"
+    resource_group_name  = "rg-monolith-dev-centralindia-001"
+    virtual_network_name = "vnet-monolith-dev-001"
+    address_prefixes     = ["10.0.1.0/24"]
+  }
+}
+
+nsgs = {
+  "dev_nsg" = {
+    name                = "nsg-monolith-dev-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-dev-centralindia-001"
+  }
+}
+
+public_ips = {
+  "dev_pip_nat" = {
+    name                = "pip-nat-monolith-dev-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-dev-centralindia-001"
+    allocation_method   = "Static"
+    sku                 = "Standard"
+  }
+}
+
+nat_gateways = {
+  "dev_nat" = {
+    name                = "nat-monolith-dev-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-dev-centralindia-001"
+    public_ip_key       = "dev_pip_nat"
+    subnet_keys         = ["dev_subnet"]
+    sku_name            = "Standard"
+  }
+}
+
+nics = {
+  "dev_nic" = {
+    name                           = "nic-monolith-dev-001"
+    location                       = "centralindia"
+    resource_group_name            = "rg-monolith-dev-centralindia-001"
+    subnet_key                     = "dev_subnet"
+    nsg_key                        = "dev_nsg"
+    associate_nsg                  = true
+    private_ip_address_allocation = "Dynamic"
+  }
 }
