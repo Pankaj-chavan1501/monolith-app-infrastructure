@@ -162,7 +162,6 @@ jobs:
 
       - name: Run Infracost
         run: infracost breakdown --path .
-        continue-on-error: true
 
       # ----------------------------------------------------------
       # Terraform Plan
