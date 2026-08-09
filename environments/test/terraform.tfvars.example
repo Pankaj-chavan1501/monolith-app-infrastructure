@@ -1,7 +1,65 @@
-workload_name = "monolith"
-environment   = "test"
-location      = "centralindia"
-instance      = "001"
-tags = {
-  Owner = "qa-team"
+resource_groups = {
+  "test_rg" = {
+    name     = "rg-monolith-test-centralindia-001"
+    location = "centralindia"
+  }
+}
+
+vnets = {
+  "test_vnet" = {
+    name                = "vnet-monolith-test-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-test-centralindia-001"
+    address_space       = ["10.1.0.0/16"]
+  }
+}
+
+subnets = {
+  "test_subnet" = {
+    name                 = "snet-monolith-test-001"
+    resource_group_name  = "rg-monolith-test-centralindia-001"
+    virtual_network_name = "vnet-monolith-test-001"
+    address_prefixes     = ["10.1.1.0/24"]
+  }
+}
+
+nsgs = {
+  "test_nsg" = {
+    name                = "nsg-monolith-test-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-test-centralindia-001"
+  }
+}
+
+public_ips = {
+  "test_pip_nat" = {
+    name                = "pip-nat-monolith-test-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-test-centralindia-001"
+    allocation_method   = "Static"
+    sku                 = "Standard"
+  }
+}
+
+nat_gateways = {
+  "test_nat" = {
+    name                = "nat-monolith-test-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-test-centralindia-001"
+    public_ip_key       = "test_pip_nat"
+    subnet_keys         = ["test_subnet"]
+    sku_name            = "Standard"
+  }
+}
+
+nics = {
+  "test_nic" = {
+    name                           = "nic-monolith-test-001"
+    location                       = "centralindia"
+    resource_group_name            = "rg-monolith-test-centralindia-001"
+    subnet_key                     = "test_subnet"
+    nsg_key                        = "test_nsg"
+    associate_nsg                  = true
+    private_ip_address_allocation = "Dynamic"
+  }
 }

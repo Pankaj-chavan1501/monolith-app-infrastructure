@@ -1,7 +1,65 @@
-workload_name = "monolith"
-environment   = "prod"
-location      = "centralindia"
-instance      = "001"
-tags = {
-  Owner = "ops-team"
+resource_groups = {
+  "prod_rg" = {
+    name     = "rg-monolith-prod-centralindia-001"
+    location = "centralindia"
+  }
+}
+
+vnets = {
+  "prod_vnet" = {
+    name                = "vnet-monolith-prod-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-prod-centralindia-001"
+    address_space       = ["10.2.0.0/16"]
+  }
+}
+
+subnets = {
+  "prod_subnet" = {
+    name                 = "snet-monolith-prod-001"
+    resource_group_name  = "rg-monolith-prod-centralindia-001"
+    virtual_network_name = "vnet-monolith-prod-001"
+    address_prefixes     = ["10.2.1.0/24"]
+  }
+}
+
+nsgs = {
+  "prod_nsg" = {
+    name                = "nsg-monolith-prod-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-prod-centralindia-001"
+  }
+}
+
+public_ips = {
+  "prod_pip_nat" = {
+    name                = "pip-nat-monolith-prod-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-prod-centralindia-001"
+    allocation_method   = "Static"
+    sku                 = "Standard"
+  }
+}
+
+nat_gateways = {
+  "prod_nat" = {
+    name                = "nat-monolith-prod-001"
+    location            = "centralindia"
+    resource_group_name = "rg-monolith-prod-centralindia-001"
+    public_ip_key       = "prod_pip_nat"
+    subnet_keys         = ["prod_subnet"]
+    sku_name            = "Standard"
+  }
+}
+
+nics = {
+  "prod_nic" = {
+    name                           = "nic-monolith-prod-001"
+    location                       = "centralindia"
+    resource_group_name            = "rg-monolith-prod-centralindia-001"
+    subnet_key                     = "prod_subnet"
+    nsg_key                        = "prod_nsg"
+    associate_nsg                  = true
+    private_ip_address_allocation = "Dynamic"
+  }
 }
