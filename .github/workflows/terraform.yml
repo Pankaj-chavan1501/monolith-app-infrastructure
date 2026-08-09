@@ -46,7 +46,9 @@ jobs:
       # ----------------------------------------------------------
 
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       # ----------------------------------------------------------
       # Terraform
@@ -130,6 +132,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
       # ----------------------------------------------------------
       # Terraform Plan
@@ -179,7 +182,9 @@ jobs:
       # ----------------------------------------------------------
 
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       # ----------------------------------------------------------
       # Terraform
