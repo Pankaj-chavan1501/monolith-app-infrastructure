@@ -41,27 +41,15 @@ jobs:
         working-directory: environments/dev
 
     steps:
-      # ----------------------------------------------------------
-      # Checkout
-      # ----------------------------------------------------------
-
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      # ----------------------------------------------------------
-      # Terraform
-      # ----------------------------------------------------------
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      # ----------------------------------------------------------
-      # Azure OIDC Authentication
-      # ----------------------------------------------------------
 
       - name: Azure Login using OIDC
         uses: azure/login@v2
@@ -70,30 +58,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # ----------------------------------------------------------
-      # Terraform Format
-      # ----------------------------------------------------------
-
       - name: Terraform Format Check
         run: terraform fmt -check -recursive ../..
-
-      # ----------------------------------------------------------
-      # Terraform Init
-      # ----------------------------------------------------------
 
       - name: Terraform Init
         run: terraform init
 
-      # ----------------------------------------------------------
-      # Terraform Validate
-      # ----------------------------------------------------------
-
       - name: Terraform Validate
         run: terraform validate
-
-      # ----------------------------------------------------------
-      # TFLint
-      # ----------------------------------------------------------
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
@@ -105,18 +77,10 @@ jobs:
           tflint --init
           tflint --recursive
 
-      # ----------------------------------------------------------
-      # tfsec
-      # ----------------------------------------------------------
-
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: environments/dev
-
-      # ----------------------------------------------------------
-      # Checkov
-      # ----------------------------------------------------------
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
@@ -160,16 +124,8 @@ jobs:
           path: ${{ runner.temp }}/gitleaks-results.sarif
           if-no-files-found: ignore
 
-      # ----------------------------------------------------------
-      # Terraform Plan
-      # ----------------------------------------------------------
-
       - name: Terraform Plan
         run: terraform plan -out=tfplan
-
-      # ----------------------------------------------------------
-      # Upload Terraform Plan
-      # ----------------------------------------------------------
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
@@ -203,27 +159,15 @@ jobs:
         working-directory: environments/dev
 
     steps:
-      # ----------------------------------------------------------
-      # Checkout
-      # ----------------------------------------------------------
-
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      # ----------------------------------------------------------
-      # Terraform
-      # ----------------------------------------------------------
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      # ----------------------------------------------------------
-      # Azure OIDC Authentication
-      # ----------------------------------------------------------
 
       - name: Azure Login using OIDC
         uses: azure/login@v2
@@ -232,26 +176,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # ----------------------------------------------------------
-      # Terraform Init
-      # ----------------------------------------------------------
-
       - name: Terraform Init
         run: terraform init
-
-      # ----------------------------------------------------------
-      # Download Terraform Plan
-      # ----------------------------------------------------------
 
       - name: Download Terraform Plan
         uses: actions/download-artifact@v4
         with:
           name: terraform-dev-plan
           path: environments/dev
-
-      # ----------------------------------------------------------
-      # Terraform Apply
-      # ----------------------------------------------------------
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
