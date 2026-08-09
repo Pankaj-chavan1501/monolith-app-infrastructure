@@ -129,13 +129,23 @@ jobs:
       - name: Install Gitleaks
         working-directory: .
         run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh \
-            | sh -s -- -b /usr/local/bin
+          VERSION="8.24.3"
+
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            -o /tmp/gitleaks.tar.gz
+
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp
+
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          sudo chmod +x /usr/local/bin/gitleaks
+
+          /usr/local/bin/gitleaks version
 
       - name: Run Gitleaks
         working-directory: .
         run: |
-          gitleaks detect \
+          /usr/local/bin/gitleaks detect \
             --redact \
             --report-format sarif \
             --report-path "${{ runner.temp }}/gitleaks-results.sarif" \
