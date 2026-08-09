@@ -1,0 +1,8 @@
+workload_name        = "monolith"
+location             = "centralindia"
+instance             = "001"
+storage_account_name = "stmonolithtfstateci001"
+container_name       = "tfstate"
+tags = {
+  Owner = "devops-team"
+}
