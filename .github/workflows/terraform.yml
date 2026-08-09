@@ -126,22 +126,10 @@ jobs:
       # Gitleaks
       # ----------------------------------------------------------
 
-      - name: Install Gitleaks
-        working-directory: .
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh \
-            | sh -s -- -b /usr/local/bin
-
-          gitleaks version
-
       - name: Run Gitleaks
-        working-directory: .
-        run: |
-          gitleaks detect \
-            --redact \
-            --report-format sarif \
-            --report-path "${{ runner.temp }}/gitleaks-results.sarif" \
-            --exit-code 1
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ----------------------------------------------------------
       # Terraform Plan
