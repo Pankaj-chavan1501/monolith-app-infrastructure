@@ -1,14 +1,14 @@
-output "resource_group_id" {
-  description = "The ID of the created Azure Resource Group."
-  value       = azurerm_resource_group.this.id
+output "resource_groups" {
+  description = "Map of created Azure Resource Group objects."
+  value       = azurerm_resource_group.this
 }
 
-output "resource_group_name" {
-  description = "The name of the created Azure Resource Group."
-  value       = azurerm_resource_group.this.name
+output "resource_group_names" {
+  description = "Map of keys to Resource Group names."
+  value       = { for k, v in azurerm_resource_group.this : k => v.name }
 }
 
-output "resource_group_location" {
-  description = "The Azure region location of the created Azure Resource Group."
-  value       = azurerm_resource_group.this.location
+output "resource_group_locations" {
+  description = "Map of keys to Resource Group locations."
+  value       = { for k, v in azurerm_resource_group.this : k => v.location }
 }

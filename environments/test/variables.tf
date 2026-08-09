@@ -1,49 +1,89 @@
-variable "workload_name" {
-  type        = string
-  description = "Name of the workload or application."
-  default     = "monolith"
-
-  validation {
-    condition     = can(regex("^[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?$", var.workload_name))
-    error_message = "workload_name must consist of lowercase letters, numbers, and hyphens, cannot start or end with a hyphen, and must be between 1 and 32 characters."
-  }
+variable "resource_groups" {
+  type = map(object({
+    name     = string
+    location = string
+    tags     = optional(map(string), {})
+  }))
+  description = "Map of Azure Resource Groups to provision."
 }
 
-variable "environment" {
-  type        = string
-  description = "Target environment deployment name."
-  default     = "test"
-
-  validation {
-    condition     = contains(["dev", "test", "prod"], var.environment)
-    error_message = "environment must be one of: dev, test, prod."
-  }
+variable "vnets" {
+  type = map(object({
+    name                = string
+    location            = string
+    resource_group_name = string
+    address_space       = list(string)
+    tags                = optional(map(string), {})
+  }))
+  description = "Map of Virtual Networks to provision."
 }
 
-variable "location" {
-  type        = string
-  description = "Azure region location for infrastructure resources."
-  default     = "centralindia"
-
-  validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.location))
-    error_message = "location must consist of lowercase letters, numbers, and hyphens without spaces."
-  }
+variable "subnets" {
+  type = map(object({
+    name                 = string
+    resource_group_name  = string
+    virtual_network_name = string
+    address_prefixes     = list(string)
+  }))
+  description = "Map of Subnets to provision."
 }
 
-variable "instance" {
-  type        = string
-  description = "Numeric instance identifier for resource naming."
-  default     = "001"
-
-  validation {
-    condition     = can(regex("^[0-9]+$", var.instance))
-    error_message = "instance must follow a numeric format (e.g., '001')."
-  }
+variable "nsgs" {
+  type = map(object({
+    name                = string
+    location            = string
+    resource_group_name = string
+    tags                = optional(map(string), {})
+    security_rules = optional(map(object({
+      priority                   = number
+      direction                  = string
+      access                     = string
+      protocol                   = string
+      source_port_range          = optional(string, "*")
+      destination_port_range     = optional(string, "*")
+      source_address_prefix      = optional(string, "*")
+      destination_address_prefix = optional(string, "*")
+      description                = optional(string, "")
+    })), {})
+  }))
+  description = "Map of Network Security Groups and security rules to provision."
 }
 
-variable "tags" {
-  type        = map(string)
-  description = "Additional tags for the environment resources."
-  default     = {}
+variable "public_ips" {
+  type = map(object({
+    name                = string
+    location            = string
+    resource_group_name = string
+    allocation_method   = optional(string, "Static")
+    sku                 = optional(string, "Standard")
+    tags                = optional(map(string), {})
+  }))
+  description = "Map of Public IPs to provision."
+}
+
+variable "nat_gateways" {
+  type = map(object({
+    name                = string
+    location            = string
+    resource_group_name = string
+    public_ip_key       = string
+    subnet_keys         = list(string)
+    sku_name            = optional(string, "Standard")
+    tags                = optional(map(string), {})
+  }))
+  description = "Map of NAT Gateways to provision."
+}
+
+variable "nics" {
+  type = map(object({
+    name                          = string
+    location                      = string
+    resource_group_name           = string
+    subnet_key                    = string
+    nsg_key                       = optional(string, null)
+    associate_nsg                 = optional(bool, true)
+    private_ip_address_allocation = optional(string, "Dynamic")
+    tags                          = optional(map(string), {})
+  }))
+  description = "Map of Network Interfaces to provision."
 }
