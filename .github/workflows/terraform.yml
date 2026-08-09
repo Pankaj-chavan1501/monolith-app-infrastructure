@@ -128,11 +128,37 @@ jobs:
       # Gitleaks
       # ----------------------------------------------------------
 
+      - name: Install Gitleaks
+        working-directory: .
+        run: |
+          curl -sSfL \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            -o gitleaks.tar.gz
+
+          tar -xzf gitleaks.tar.gz
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          rm gitleaks.tar.gz
+
+          gitleaks version
+
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+        working-directory: .
+        run: |
+          gitleaks detect \
+            --source="${{ github.workspace }}" \
+            --redact \
+            --report-format sarif \
+            --report-path "${{ runner.temp }}/gitleaks-results.sarif" \
+            --exit-code 1
+
+      - name: Upload Gitleaks Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-results
+          path: ${{ runner.temp }}/gitleaks-results.sarif
+          if-no-files-found: ignore
 
       # ----------------------------------------------------------
       # Terraform Plan
